@@ -14,3 +14,5 @@ Imports:
     numform,
     terra,
     utils
+URL: https://github.com/lysoifer/microclim3D
+BugReports: https://github.com/lysoifer/microclim3D/issues
