@@ -70,3 +70,44 @@ get_gedi_tiles = function(e, fpath, unzip = F, download = T) {
   }
   return(fname.csv)
 }
+
+
+#' Download ERA5 for area
+#'
+#'@description
+#'Download ERA5 climate data using mcera5. Will not download if file is already present.
+#'cds access token must be set prior to running this function. See mcera5 vignette for details
+#'
+#' @param st_time start time of download, character date in format YYYY-MM-DD (e.g., "2023-01-01")
+#' @param en_time end time of download, character date in format YYYY-MM-DD (e.g., "2023-12-31)
+#' @param uid uid for climate data store (should be your email for your account)
+#' @param file_prefix prefix for .nc file
+#' @param file_path path for .nc file
+#' @param e spat extent to define spatial extent of the download
+#'
+#' @return NA downloads and saves data
+#' @export
+
+get_era5 = function(st_time, en_time, uid, file_prefix, file_path, e) {
+  # st_time: vector of start times (e.g., 1st of each month)
+  # en_time: vector of end times (e.g. last day/hour of each month)
+  # uid: uid for climate data store (should be your email for your account)
+  # file_prefix: prefix for .nc file
+  # file_path: path for .nc file
+  # e spatextent to define spatial extent of the download
+
+  # check if file exists and if not download era5 data
+
+  req = mcera5::build_era5_request(xmin = e[1], xmax = e[2],
+                                   ymin = e[3], ymax = e[4],
+                                   start_time = as.POSIXlt(st_time, tz = "UTC"),
+                                   end_time = as.POSIXlt(en_time, tz = "UTC"),
+                                   by_month = T, outfile_name = file_prefix)
+
+  wd = getwd()
+  setwd(file_path)
+  mcera5::request_era5(req, uid, out_path = file_path, overwrite = F, combine = T)
+  setwd(wd)
+
+}
+
