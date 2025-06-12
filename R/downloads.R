@@ -111,3 +111,24 @@ get_era5 = function(st_time, en_time, uid, file_prefix, file_path, e) {
 
 }
 
+
+#' get_soil
+#' Download sand, silt, and clay content at 0-5 cm depth from soilgrids database
+#' @param e spatvector giving extent over which to get soil data
+#' @param outdir filename to save soil data (ending in .tif)
+#' @param overwrite whether to overwrite file is it exists (TRUE) or not (default FALSE)
+#'
+#' @returns saves spatraster to outdir and returns spatraster
+#'
+#' @export
+get_soil = function(e, outdir, overwrite = FALSE) {
+  soil = soilDB::fetchSoilGrids(
+    x = e,
+    depth_intervals = c("0-5"),
+    variables = c("clay", "sand", "silt"),
+    grid = T,
+    filename = outdir,
+    summary_type = "mean",
+    overwrite = F
+  )
+}
