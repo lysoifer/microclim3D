@@ -104,10 +104,10 @@ get_era5 = function(st_time, en_time, uid, file_prefix, file_path, e) {
                                    end_time = as.POSIXlt(en_time, tz = "UTC"),
                                    by_month = T, outfile_name = file_prefix)
 
-  wd = getwd()
-  setwd(file_path)
+  #wd = getwd()
+  #setwd(file_path)
   mcera5::request_era5(req, uid, out_path = file_path, overwrite = F, combine = T)
-  setwd(wd)
+  #setwd(wd)
 
 }
 

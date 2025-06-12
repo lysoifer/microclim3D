@@ -2,3 +2,4 @@
 
 export(get_era5)
 export(get_gedi_tiles)
+export(get_soil)
