@@ -2,9 +2,13 @@
 #' get soil parameters for microclimate model
 #'
 #' @param soilr spatraster of soildata with three layers named sand, silt, and clay
+#' @param e extent to crop to
 #'
 #' @return spatraster of soiltypes numbered according to microclimf::soilparams
-soil_params = function(soilr) {
+soil_params = function(soilr,e) {
+
+  terra::crop(soilr, e)
+
   soildf = as.data.frame(soilr, xy = T)
   cl = which(grepl("clay", colnames(soildf)))
   sa = which(grepl("sand", colnames(soildf)))

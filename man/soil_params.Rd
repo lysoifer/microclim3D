@@ -5,10 +5,12 @@
 \title{soil_params
 get soil parameters for microclimate model}
 \usage{
-soil_params(soilr)
+soil_params(soilr, e)
 }
 \arguments{
 \item{soilr}{spatraster of soildata with three layers named sand, silt, and clay}
+
+\item{e}{extent to crop to}
 }
 \value{
 spatraster of soiltypes numbered according to microclimf::soilparams
