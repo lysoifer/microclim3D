@@ -4,7 +4,7 @@
 \alias{get_era5}
 \title{Download ERA5 for area}
 \usage{
-get_era5(st_time, en_time, uid, file_prefix, file_path, e)
+get_era5(st_time, en_time, uid, file_prefix, file_path, e, overwrite = F)
 }
 \arguments{
 \item{st_time}{start time of download, character date in format YYYY-MM-DD (e.g., "2023-01-01")}
@@ -18,6 +18,8 @@ get_era5(st_time, en_time, uid, file_prefix, file_path, e)
 \item{file_path}{path for .nc file}
 
 \item{e}{spat extent to define spatial extent of the download}
+
+\item{overwrite;}{logical (default FALSE), should files be overwritten}
 }
 \value{
 NA downloads and saves data

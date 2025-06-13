@@ -84,11 +84,12 @@ get_gedi_tiles = function(e, fpath, unzip = F, download = T) {
 #' @param file_prefix prefix for .nc file
 #' @param file_path path for .nc file
 #' @param e spat extent to define spatial extent of the download
+#' @param overwrite; logical (default FALSE), should files be overwritten
 #'
 #' @return NA downloads and saves data
 #' @export
 
-get_era5 = function(st_time, en_time, uid, file_prefix, file_path, e) {
+get_era5 = function(st_time, en_time, uid, file_prefix, file_path, e, overwrite = F) {
   # st_time: vector of start times (e.g., 1st of each month)
   # en_time: vector of end times (e.g. last day/hour of each month)
   # uid: uid for climate data store (should be your email for your account)
