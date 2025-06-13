@@ -107,7 +107,7 @@ get_era5 = function(st_time, en_time, uid, file_prefix, file_path, e, overwrite 
 
   #wd = getwd()
   #setwd(file_path)
-  mcera5::request_era5(req, uid, out_path = file_path, overwrite = F, combine = T)
+  mcera5::request_era5(req, uid, out_path = file_path, overwrite = overwrite, combine = T)
   #setwd(wd)
 
 }
