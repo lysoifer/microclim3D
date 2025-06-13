@@ -290,6 +290,8 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
     lsm = crop_fast(land_sea_mask, e)
     var_list[[12]] = lsm
 
+    names(var_list) <- c(varname_list, "lsm")
+
   } else {
     var_list <- lapply(varname_list, function(v) {
       if (v == "lsm") {
