@@ -420,7 +420,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
     pres <- sp / 1000
     ## Convert humidity from specific to relative
     relhum <- humidity
-    terra::values(relhum) <- converthumidity(h = terra::as.array(humidity),
+    terra::values(relhum) <- mcera5::converthumidity(h = terra::as.array(humidity),
                                              intype = "specific",
                                              tc  = terra::as.array(temperature),
                                              pk = terra::as.array(pres))$relative
