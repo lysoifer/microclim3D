@@ -12,7 +12,9 @@ RoxygenNote: 7.3.1
 Imports: 
     mcera5,
     methods,
+    modisfast,
     numform,
+    sf,
     terra,
     utils
 URL: https://github.com/lysoifer/microclim3D
