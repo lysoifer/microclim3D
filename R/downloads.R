@@ -133,3 +133,58 @@ get_soil = function(e, outdir, overwrite = FALSE) {
     overwrite = F
   )
 }
+
+
+#' Download MODIS data
+#'
+#' @description
+#' Downloads MODIS data using modisfast R package. Defaults are to download MODIS landcover
+#'
+#' @param e list of spatExtents to download modis landcover data (e.g., list(ext(xmin, xmax, ymin, ymax)))
+#' @param start character start date (e.g., "2019-01-01")
+#' @param end character end date
+#' @param usr earthdata username
+#' @param pwd earthdata password
+#' @param collection collection to download (default MCD12Q1.061) Can be any collection supported by modisfast package
+#' @param variables vector of variables to download (must be variables in the collection)
+#' @param regions character name of regions for which data will be downloaded (this will be used to name folders for downloaded files)
+#'
+#' @return dataframe describing downloaded data. See documentation of modisfast::mf_download_data for variable descriptions
+#' Data will be downloaded and combined into a single netcds file
+#'
+#' @export
+
+get_modis_lc = function(e, start, end, usr, pwd, collection = "MCD12Q1",
+                        variables = c("LC_Type1", "QC"), regions) {
+
+  # convert roi to sf polygons
+  roi = lapply(e, as.polygons, crs = "epsg:4326")
+  roi = vect(roi)
+  roi$id = regions
+  roi = sf::st_as_sf(roi)
+
+  # convert start and end to dates
+  time_range = as.Date(c(start, end))
+
+  # add login credentials
+  log = modisfast::mf_login(credentials = c(usr, pwd))
+
+  # get urls
+
+  opt_param = modisfast::mf_get_opt_param(collection = collection, roi = roi,
+                                          credentials = c(usr, pwd))
+
+  urls = modisfast::mf_get_url(collection = collection,
+                    variables = variables,
+                    roi = roi,
+                    time_range = time_range,
+                    single_netcdf = T,
+                    opt_param = opt_param)
+
+  # download data
+  res_dl = modisfast::mf_download_data(df_to_dl = urls, path = outpath, parallel = T)
+
+  return(res_dl)
+}
+
+

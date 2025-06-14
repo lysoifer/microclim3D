@@ -122,9 +122,9 @@ vegp_point = function(vegp, lon, lat, pai, h) {
 #' Reclassify landcover types to those specified in microclimf
 #'
 #' @param lc spatraster with numeric landcover classifications
-#' @param type classification scheme (currently supported is LC_Type 1
+#' @param type character classification scheme (currently supported is LC_Type 1
 #' (annual international geosphere-biosphere programme classification) from
-#' MODIS MCD12Q1)
+#' MODIS MCD12Q1.)
 #'
 #' @description
 #' type options: modis_igbp (IGBP classification from MODIS12Q1)
@@ -142,6 +142,7 @@ reclass_landcover = function(lc, type = "modis_igbp") {
                    255,NA),
                  byrow = T, ncol = 2)
   }
+
   reclass = classify(lc[[1]], rcl, others = NULL)
   return(reclass)
 }

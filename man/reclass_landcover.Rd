@@ -10,9 +10,9 @@ reclass_landcover(lc, type = "modis_igbp")
 \arguments{
 \item{lc}{spatraster with numeric landcover classifications}
 
-\item{type}{classification scheme (currently supported is LC_Type 1
+\item{type}{character classification scheme (currently supported is LC_Type 1
 (annual international geosphere-biosphere programme classification) from
-MODIS MCD12Q1)}
+MODIS MCD12Q1.)}
 }
 \description{
 type options: modis_igbp (IGBP classification from MODIS12Q1)
