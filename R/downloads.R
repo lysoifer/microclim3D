@@ -155,7 +155,7 @@ get_soil = function(e, outdir, overwrite = FALSE) {
 #'
 #' @export
 
-get_modis_lc = function(e, start, end, usr, pwd, collection = "MCD12Q1",
+get_modis_lc = function(e, start, end, usr, pwd, collection = "MCD12Q1.061",
                         variables = c("LC_Type1", "QC"), regions, outpath) {
 
   # convert roi to sf polygons

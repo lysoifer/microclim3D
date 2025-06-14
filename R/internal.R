@@ -143,7 +143,7 @@ reclass_landcover = function(lc, type = "modis_igbp") {
                  byrow = T, ncol = 2)
   }
 
-  reclass = classify(lc[[1]], rcl, others = NULL)
+  reclass = classify(lc, rcl, others = NULL)
   return(reclass)
 }
 

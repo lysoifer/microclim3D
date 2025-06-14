@@ -10,7 +10,7 @@ get_modis_lc(
   end,
   usr,
   pwd,
-  collection = "MCD12Q1",
+  collection = "MCD12Q1.061",
   variables = c("LC_Type1", "QC"),
   regions,
   outpath
