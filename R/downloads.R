@@ -148,6 +148,7 @@ get_soil = function(e, outdir, overwrite = FALSE) {
 #' @param collection collection to download (default MCD12Q1.061) Can be any collection supported by modisfast package
 #' @param variables vector of variables to download (must be variables in the collection)
 #' @param regions character name of regions for which data will be downloaded (this will be used to name folders for downloaded files)
+#' @param outpath file path to save downloads
 #'
 #' @return dataframe describing downloaded data. See documentation of modisfast::mf_download_data for variable descriptions
 #' Data will be downloaded and combined into a single netcds file
@@ -155,7 +156,7 @@ get_soil = function(e, outdir, overwrite = FALSE) {
 #' @export
 
 get_modis_lc = function(e, start, end, usr, pwd, collection = "MCD12Q1",
-                        variables = c("LC_Type1", "QC"), regions) {
+                        variables = c("LC_Type1", "QC"), regions, outpath) {
 
   # convert roi to sf polygons
   roi = lapply(e, as.polygons, crs = "epsg:4326")
