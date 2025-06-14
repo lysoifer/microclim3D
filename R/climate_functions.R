@@ -369,7 +369,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
   downlong = avg_sdlwrf * 0.0036 # Convert to MJ/m^2/hr
   uplong = netlong + downlong
   emissivity = downlong/uplong
-  jd = julday(lubridate::year(tme),
+  jd = mcera5::julday(lubridate::year(tme),
               lubridate::month(tme),
               lubridate::day(tme))
   rad_dni = fdir * 0.000001 # Convert form J/m^2 to MJ/m^2
@@ -387,7 +387,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
   # Create a template with dimensions (x * y) and length(tme)
   out <- array(NA, dim = c(nrow(coords), length(tme)))
   for (i in 1:nrow(coords)) {
-    out[i,] <- siflat(lubridate::hour(tme),
+    out[i,] <- mcera5::siflat(lubridate::hour(tme),
                       lat = coords$y[i],
                       long = coords$x[i],
                       jd)
@@ -402,7 +402,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
   # Create a template with dimensions (x * y) and length(tme)
   out <- array(NA, dim = c(nrow(coords), length(tme)))
   for (i in 1:nrow(coords)) {
-    out[i,] <- solalt(lubridate::hour(tme),
+    out[i,] <- mcera5::solalt(lubridate::hour(tme),
                       lat = coords$y[i],
                       long = coords$x[i],
                       julian = jd)
