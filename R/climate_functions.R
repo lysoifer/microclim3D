@@ -362,7 +362,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
                                   temperature,
                                   sp)
   windspeed = sqrt(u10^2 + v10^2)
-  windspeed = windheight(windspeed, 10, 2)
+  windspeed = mcera5::windheight(windspeed, 10, 2)
   winddir = (terra::atan2(u10, v10) * 180/pi + 180)%%360
   cloudcover = tcc * 100
   netlong = abs(avg_snlwrf) * 0.0036 # Convert to MJ/m^2/hr
