@@ -130,7 +130,7 @@ get_soil = function(e, outdir, overwrite = FALSE) {
     grid = T,
     filename = outdir,
     summary_type = "mean",
-    overwrite = F
+    overwrite = overwrite
   )
 }
 
