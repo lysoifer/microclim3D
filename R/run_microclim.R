@@ -144,11 +144,11 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
 
   # unpack vegp
   vegp = lapply(vegp, unwrap)
-  soil = unwrap(microin$soil)
-  elev = unwrap(microin$elev)
-  asp = unwrap(microin$asp)
-  slp = unwrap(microin$slp)
-  dtmc = unwrap(microin$dtmc)
+  soil = unwrap(soil)
+  elev = unwrap(elev)
+  asp = unwrap(asp)
+  slp = unwrap(slp)
+  dtmc = unwrap(dtmc)
 
   # Loop through GEDI points and calculate vertical microclimate gradient for each
   v = foreach(i = 1:nrow(gedi), .combine = rbind) %do% {
