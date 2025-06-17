@@ -6,12 +6,12 @@
 #' @param e spatextent to project to
 #' @param method method for reprojection (see terra::project method for options)
 .reproj_bigr = function(r, proj_e, e, method) {
-  e_extend = extend(e, 0.5)
-  eproj = terra::project(e_extend, proj_e, crs(r))
-  r = crop(r, eproj)
-  r = project(r, proj_e, method = method)
-  r = crop(r, e_extend)
-  r = mask(r, e_extend)
+  e_extend = terra::extend(e, 0.5)
+  eproj = terra::project(e_extend, proj_e, terra::crs(r))
+  r = terra::crop(r, eproj)
+  r = terra::project(r, proj_e, method = method)
+  r = terra::crop(r, e_extend)
+  r = terra::mask(r, e_extend)
 
   return(r)
 }
@@ -22,6 +22,7 @@
 #'
 #' @param pai_z vector of PAI values at height intervals from 0 to top of canopy (as in gedi data)
 #' @param h height of canopy
+#' @param pai total pai (only need to include if vertpai_method = "pavd")
 #' @param vertpai_method can be "pai" or "pavd". If "pai", then vertical foliage profiles are calculated
 #' by finding the difference between cumulative PAI at different heights in the canopy. For example,
 #' the pai in the 0-1m voxel would be calculated as the difference between the pai at 0m (cumulative pai)
@@ -30,14 +31,21 @@
 #' of pavd in a given layer to the total pavd. These two methods will return slightly different vertical profiles.
 #'
 #' @return PAI profile at 1 m intervals from ground to top of canopy. Values add up to total PAI in gedi data
-.pai_vertprofile = function(pai_z, h, vertpai_method) {
+.pai_vertprofile = function(pai_z, h, pai, vertpai_method = "pai") {
 
   # sum of vertical pai profile must equal total pai for the model to run
 
   if(vertpai_method == "pai") {
     # need to include zero here because pai_a0 does not equal pai0-5
     h_int = c(0,1,seq(6,floor(h)+5, 5))
-    h_int2 = seq(0,floor(h), 1)
+    # for micropoint to run, need to have paii at least length 10
+    if(h >= 10) {
+      h_int2 = seq(0,floor(h), 1)
+    }
+    if(h<10) {
+      h_int2 = seq(0,floor(h), length.out = 10)
+    }
+
 
     pai_z = pai_z[1:length(h_int)]
 
@@ -53,7 +61,12 @@
   # Try using proportion of pavd
   if(vertpai_method == "pavd") {
     h_int = seq(1,floor(h) + 5,5)
-    h_int2 = seq(1,floor(h),1)
+    if(h >= 10) {
+      h_int2 = seq(0,floor(h), 1)
+    }
+    if(h<10) {
+      h_int2 = seq(0,floor(h), length.out = 10)
+    }
     pavd = pavd[1:length(h_int)]
     splinepavd = splinefun(h_int, pavd, method = "monoH.FC")
     pavdspline = splinepavd(h_int2)
@@ -94,7 +107,7 @@ vegp_point = function(vegp, lon, lat, pai, h) {
   colnames(soilclass) = c("ID", "CLAY", "SAND", "SILT")
 
   # classify soil texture according to USDA classification
-  soilclass = TT.points.in.classes(soilclass, class.sys = "USDA.TT")
+  soilclass = soiltexture::TT.points.in.classes(soilclass, class.sys = "USDA.TT")
 
   colnames(soilclass) = c(
     "Clay", "Silty clay", "Sandy clay",
@@ -106,7 +119,8 @@ vegp_point = function(vegp, lon, lat, pai, h) {
   soilclass = names(which(soilclass[1,]==1))
   #soilnum = which(microclimf::soilparameters$Soil.type==soilclass)
 
-  soilp = micropoint::soilparams[soilparams$Soil.type == soilclass,]
+  # soilparams are those defined in micropoint package
+  soilp = soilparams[soilparams$Soil.type == soilclass,]
 
   groundparams_p = list(
     gref = 0.15, # ground reflectance - microctools automatically sets gref to 0.15
