@@ -115,22 +115,63 @@ prep_micropoint = function(e, start, end, era_path, landcover_path, soilpath, el
 #' @param modis_path file path to modis lai data
 #' @param reqhgts vector of hgts above ground at which to model microclimates.
 #' default NA models microclimate at 0.15, 2, and then 5 to floor(canopy height) at 5 m intervals
+#' @param vertpai_method determines the method used to calculate the vertical distribution of foliage.
+#' Can be "pai" or "pavd". If "pai", then vertical foliage profiles are calculated
+#' by finding the difference between cumulative PAI at different heights in the canopy. For example,
+#' the pai in the 0-1m voxel would be calculated as the difference between the pai at 0m (cumulative pai)
+#' and the pai at 1m (where this represents the PAI from the top of the canopy down to 1m). If "pavd", then
+#' vertical pai is calculated as proportion of total pai where proportions are determined by the contribution
+#' of pavd in a given layer to the total pavd. These two methods will return slightly different vertical profiles.
+
 #'
-run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc, method, plotout, n, maxiter, fout, modis_path, reqhgts = NA) {
+run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
+                          method, plotout, n, maxiter, fout, modis_path, reqhgts = NA, vertpai_method = "pai") {
   # if(method == "vertprof") {
   #   vertmat = matrix(ncol = 7, nrow = 0)
   #   colnames(vertmat) = c("z", "tair", "canopy_height", "elev", "lon", "lat", "doy")
   #   write.table(vertmat, fout)
   # }
-  v = foreach(i = 1:nrow(gedi), .combine = "rbind") %do% {
-    print(i)
-    # extract climate data
-    #era.files = list.files(file_path_era5, pattern = ".nc", full.names = T)
 
-    # extract climate data from raster and apply distance weighting correction
-    #tic()
+  # Unpack spatrasters
+  # if we have multiple years of climate data
+  if(is(climr[[1]], "list")) {
+    for(a in 1:length(climr)) {
+      climr[[a]] = lapply(climr[[a]], unwrap)
+    }
+  } else { # if there is only one year of climate data
+    climr = unwrap(climr)
+  }
+
+  # unpack vegp
+  vegp = lapply(vegp, unwrap)
+  soil = unwrap(microin$soil)
+  elev = unwrap(microin$elev)
+  asp = unwrap(microin$asp)
+  slp = unwrap(microin$slp)
+  dtmc = unwrap(microin$dtmc)
+
+  # Loop through GEDI points and calculate vertical microclimate gradient for each
+  v = foreach(i = 1:nrow(gedi), .combine = rbind) %do% {
+    print(i)
+
+    # If we are modelling for only the month in which the GEDI point was observed
+    # Then we need to pull out the year and month of the observation
+    # and select the climate data for the correct year
+    if(method == "temporal_month") {
+      gedi[, year:= year(as.Date(date))]
+      pyear = gedi[i, year]
+      pmonth = gedi[i, month]
+      climri = climr[[as.character(pyear)]]
+      tmei = climri$obs_time
+      climri = climri[2:10]
+    }
+
+
+    # extract climate data from raster at requested point
+    # and apply distance weighting correction
+
     clim_point = clim_distweight(lon = as.numeric(gedi[i, "lon_lm_a0"]), lat = as.numeric(gedi[i,"lat_lm_a0"]),
-                                 climr, tme) %>%
+                                 climri, tmei) %>%
       dplyr::select(!timezone) %>%
       mutate(obs_time = format(obs_time, format = "%Y-%m-%d %H:%M:%S")) %>%
       as.data.frame()
@@ -145,13 +186,23 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc, me
     clim_point$pres = altcor[["pk"]]
 
     # vegetation parameters
-    h = as.numeric(gedi[i, "rh_98_a0"]) # height
+    h = as.numeric(gedi[i, "rh_100_a0"]) # height
     pai = as.numeric(gedi[i, "pai_a0"]) #pai
 
     # get vertical pai profile
-    pai_z = as.numeric(gedi[i, pai_l1:pai_l21])
+    pai_z = as.numeric(gedi[i, pai_a0:pai_l21])
+    pavd = as.numeric(gedi[i,pavd_0_5:pavd_95_100]) # pavd
 
-    paii = .pai_vertprofile(pai_z, pai, h)
+    paii = .pai_vertprofile(pai_z, h, vertpai_method)
+
+    # If we want to model climate over an entire year, we need monthly estimates of pai
+    # MODIS provides temporally resolved PAI, but GEDI is a single time point
+    # The way I have approached it here is to model temporal variation in GEDI PAI
+    # assuming a constant offset with MODIS
+    # I additionally assume that the temporal variation is constant across the vertical profile
+    # which is probably not a good assumption as understory greenup is typically offset from
+    # canopy greenup
+    # I also should be estimating temporal variability in clumpiness, which I am not currently doing
 
     # get vertical profile by season
     if(method == "temporal_year") {
@@ -166,7 +217,8 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc, me
     print(h)
 
     # extract values from vegp raster to get veg parameters at point
-    # WILL NEED TO ADD TEMPORAL VARIABILITY IN PAI AND CLUMPINESS
+    # pai and height are derived from GEDI
+    # remaining is derived from auto-generated params based on habitat type and lat/lon
     vegp_p = vegp_point(vegp, lon = as.numeric(gedi[i, "lon_lm_a0"]),
                         lat = as.numeric(gedi[i, "lat_lm_a0"]),
                         pai, h)
@@ -208,11 +260,12 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc, me
 
     # model microclimates at specified reqhgts for the month of the gedi shot
     if(method == "temporal_month") {
-      m = month(as.Date(gedi[i,date]))
-      hrs = which(month(clim_point$obs_time)==m)
-      if(is.na(sum(reqhgts))) {reqhgts = c(0.15, 2, seq(5,h - h%%5, 5))}
+      #m = month(as.Date(gedi[i,date]))
+      hrs = which(month(clim_point$obs_time)==pmonth)
+      req = reqhgts
+      if(is.na(sum(reqhgts))) {req = c(0.15, 2, seq(5,h - h%%5, 5), h-0.1)}
       # pai is currently constant
-      mout = foreach(hi = reqhgts, .combine = "rbind") %do% {
+      mout = foreach(hi = req, .combine = rbind) %do% {
         out = micropoint::runpointmodel(
           clim_point_correct[hrs,],
           reqhgt = hi,
@@ -267,3 +320,35 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc, me
   write.csv(v, file = fout, row.names = F)
   return(v)
 }
+
+
+# need to return canopy height and canopy pai
+# also would be nice to find a way of returning vertical veg profiles used in the model
+# test plots
+# df = v %>%
+#   mutate(mday = mday(obs_time)) %>%
+#   group_by(shot_num, reqhgt, mday) %>%
+#   summarise(tair.minday = min(tair)) %>%
+#   group_by(shot_num, reqhgt) %>%
+#   summarise(tmin_cold = mean(tair.minday))
+#   # group_by(reqhgt) %>%
+#   # summarise(tmin_cold.mean = mean(tmin_cold), tmin_cold.sd = sd(tmin_cold))
+#   #
+#
+# ggplot(df, aes(tmin_cold, reqhgt, group = as.factor(shot_num))) +
+#   geom_line() +
+#   theme_bw()
+#
+#
+# df2 = v2 %>%
+#   mutate(mday = mday(obs_time)) %>%
+#   group_by(shot_num, reqhgt, mday) %>%
+#   summarise(tair.minday = min(tair)) %>%
+#   group_by(shot_num, reqhgt) %>%
+#   summarise(tmin_cold = mean(tair.minday))
+#
+# ggplot(df2, aes(tmin_cold, reqhgt, group = as.factor(shot_num))) +
+#   geom_line() +
+#   theme_bw()
+#
+#

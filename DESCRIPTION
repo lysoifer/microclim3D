@@ -10,14 +10,21 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Imports: 
+    data.table,
+    dplyr,
+    foreach,
+    lubridate,
     mcera5,
     methods,
     microclimf,
+    micropoint,
     modisfast,
     numform,
     sf,
     soilDB,
+    soiltexture,
     terra,
+    tidyr,
     utils
 URL: https://github.com/lysoifer/microclim3D
 BugReports: https://github.com/lysoifer/microclim3D/issues

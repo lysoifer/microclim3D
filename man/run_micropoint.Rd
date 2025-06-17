@@ -21,7 +21,8 @@ run_micropoint(
   maxiter,
   fout,
   modis_path,
-  reqhgts = NA
+  reqhgts = NA,
+  vertpai_method = "pai"
 )
 }
 \arguments{
@@ -65,6 +66,14 @@ only needed if method = "vertprof"}
 
 \item{reqhgts}{vector of hgts above ground at which to model microclimates.
 default NA models microclimate at 0.15, 2, and then 5 to floor(canopy height) at 5 m intervals}
+
+\item{vertpai_method}{determines the method used to calculate the vertical distribution of foliage.
+Can be "pai" or "pavd". If "pai", then vertical foliage profiles are calculated
+by finding the difference between cumulative PAI at different heights in the canopy. For example,
+the pai in the 0-1m voxel would be calculated as the difference between the pai at 0m (cumulative pai)
+and the pai at 1m (where this represents the PAI from the top of the canopy down to 1m). If "pavd", then
+vertical pai is calculated as proportion of total pai where proportions are determined by the contribution
+of pavd in a given layer to the total pavd. These two methods will return slightly different vertical profiles.}
 }
 \description{
 Run micropoint

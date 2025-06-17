@@ -6,12 +6,19 @@
 Calculate pai vertical profile from gedi data
 Values add up to total PAI (for input into micropoint paii argument)}
 \usage{
-.pai_vertprofile(pai_z, pai, h)
+.pai_vertprofile(pai_z, h, vertpai_method)
 }
 \arguments{
 \item{pai_z}{vector of PAI values at height intervals from 0 to top of canopy (as in gedi data)}
 
 \item{h}{height of canopy}
+
+\item{vertpai_method}{can be "pai" or "pavd". If "pai", then vertical foliage profiles are calculated
+by finding the difference between cumulative PAI at different heights in the canopy. For example,
+the pai in the 0-1m voxel would be calculated as the difference between the pai at 0m (cumulative pai)
+and the pai at 1m (where this represents the PAI from the top of the canopy down to 1m). If "pavd", then
+vertical pai is calculated as proportion of total pai where proportions are determined by the contribution
+of pavd in a given layer to the total pavd. These two methods will return slightly different vertical profiles.}
 }
 \value{
 PAI profile at 1 m intervals from ground to top of canopy. Values add up to total PAI in gedi data

@@ -22,34 +22,45 @@
 #'
 #' @param pai_z vector of PAI values at height intervals from 0 to top of canopy (as in gedi data)
 #' @param h height of canopy
+#' @param vertpai_method can be "pai" or "pavd". If "pai", then vertical foliage profiles are calculated
+#' by finding the difference between cumulative PAI at different heights in the canopy. For example,
+#' the pai in the 0-1m voxel would be calculated as the difference between the pai at 0m (cumulative pai)
+#' and the pai at 1m (where this represents the PAI from the top of the canopy down to 1m). If "pavd", then
+#' vertical pai is calculated as proportion of total pai where proportions are determined by the contribution
+#' of pavd in a given layer to the total pavd. These two methods will return slightly different vertical profiles.
 #'
 #' @return PAI profile at 1 m intervals from ground to top of canopy. Values add up to total PAI in gedi data
-.pai_vertprofile = function(pai_z, pai, h) {
-  pai_z = pai_z[pai_z != 0] # remove zeros above top of canopy
-  # convert to 1m intervals
-  # assume even distribution within 5m intervals
-  #pai_z2 = spline(pai_z, n = round(h))[[2]]
+.pai_vertprofile = function(pai_z, h, vertpai_method) {
 
-  # first is pai 0-5m and is equivalent to total pai
-  # get pai in each height bin so that sum of pai = total pai
-  if(length(pai_z)!=1) {
-    pai_z = pai_z - c(pai_z[2:length(pai_z)],0)
-  }
+  # sum of vertical pai profile must equal total pai for the model to run
 
-  if(length(pai_z != 1)) {
-    pai_z1 = pai_z[1:length(pai_z)-1]
-    pai_z1 = rep(pai_z1/5, each = 5)
-    pai_z2 = pai_z[length(pai_z)]
-    x = 5 - (length(pai_z)*5 - (ceiling(h)))
-    pai_z2 = rep(pai_z2/x, each = x)
-    pai_z = c(pai_z1, pai_z2)
-  } else {
-    x = floor(h)
-    pai_z = rep(pai/x, each = x)
+  if(vertpai_method == "pai") {
+    # need to include zero here because pai_a0 does not equal pai0-5
+    h_int = c(0,1,seq(6,floor(h)+5, 5))
+    h_int2 = seq(0,floor(h), 1)
+
+    pai_z = pai_z[1:length(h_int)]
+
+    # apply a monotonically decreasing spline
+    monospline = splinefun(h_int, pai_z, method = "monoH.FC")
+    pai_zspline = monospline(h_int2)
+    pai_z2 = pai_zspline - c(pai_zspline[2:length(pai_zspline)],0)
   }
 
 
-  return(pai_z)
+  # We add zero to the list of PAIz values because pai at the top of the canopy = 0 (see paiz description in gedi documentation)
+
+  # Try using proportion of pavd
+  if(vertpai_method == "pavd") {
+    h_int = seq(1,floor(h) + 5,5)
+    h_int2 = seq(1,floor(h),1)
+    pavd = pavd[1:length(h_int)]
+    splinepavd = splinefun(h_int, pavd, method = "monoH.FC")
+    pavdspline = splinepavd(h_int2)
+    pavdprop = pavdspline/sum(pavdspline)
+    pai_z2 = pai*pavdprop
+  }
+  return(pai_z2)
 }
 
 
