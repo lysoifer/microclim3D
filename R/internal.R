@@ -112,7 +112,7 @@ vegp_point = function(vegp, lon, lat, pai, h) {
   colnames(soilclass) = c(
     "Clay", "Silty clay", "Sandy clay",
     "Clay loam", "Silty clay loam", "Sandy clay loam",
-    "Loam", "Silty loam", "Sandy loam",
+    "Loam", "Silt loam", "Sandy loam",
     "Silt", "Loamy sand", "Sand"
   )
 
