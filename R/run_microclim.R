@@ -122,7 +122,8 @@ prep_micropoint = function(e, start, end, era_path, landcover_path, soilpath, el
 #' and the pai at 1m (where this represents the PAI from the top of the canopy down to 1m). If "pavd", then
 #' vertical pai is calculated as proportion of total pai where proportions are determined by the contribution
 #' of pavd in a given layer to the total pavd. These two methods will return slightly different vertical profiles.
-
+#'
+#'@importFrom foreach %do%
 #'
 run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
                           method, plotout, n, maxiter, fout, modis_path, reqhgts = NA, vertpai_method = "pai") {
@@ -158,7 +159,7 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
     # Then we need to pull out the year and month of the observation
     # and select the climate data for the correct year
     if(method == "temporal_month") {
-      gedi[, year:= year(as.Date(date))]
+      #gedi[, year:= year(as.Date(date))] # year is already a variable
       pyear = gedi[i, year]
       pmonth = gedi[i, month]
       climri = climr[[as.character(pyear)]]
