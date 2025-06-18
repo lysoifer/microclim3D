@@ -327,6 +327,8 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
   }
   #return(vertmat)
   if(!is.na(fout)) {
+    # make directory if it doesn't exist
+    if(!dir.exists(dirname(fout))) {dir.create(dirname(fout))}
     write.csv(v, file = fout, row.names = F)
   }
   return(v)
