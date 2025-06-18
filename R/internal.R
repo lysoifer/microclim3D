@@ -103,7 +103,7 @@ vegp_point = function(vegp, lon, lat, pai, h) {
 #' @param lon longitude decimal degrees
 #' @param lat latitude decimal degrees
 .ground_point = function(soil, asp_p, slp_p, lon, lat) {
-  soilclass = terra::extract(soil, data.frame(lon, lat))
+  soilclass = terra::extract(soil, data.frame(lon, lat), method = "bilinear")
   colnames(soilclass) = c("ID", "CLAY", "SAND", "SILT")
 
   # classify soil texture according to USDA classification

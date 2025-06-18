@@ -125,8 +125,11 @@ prep_micropoint = function(e, start, end, era_path, landcover_path, soilpath, el
 #'
 #'@importFrom foreach %do%
 #'
+#'@export
+#'
 run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
-                          method, plotout, n, maxiter, fout, modis_path, reqhgts = NA, vertpai_method = "pai") {
+                          method, plotout, n, maxiter, fout = NA,
+                          modis_path, reqhgts = NA, vertpai_method = "pai") {
   # if(method == "vertprof") {
   #   vertmat = matrix(ncol = 7, nrow = 0)
   #   colnames(vertmat) = c("z", "tair", "canopy_height", "elev", "lon", "lat", "doy")
@@ -135,7 +138,7 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
 
   # Unpack spatrasters
   # if we have multiple years of climate data
-  if(is(climr[[1]], "list")) {
+  if(methods::is(climr[[1]], "list")) {
     for(a in 1:length(climr)) {
       climr[[a]] = lapply(climr[[a]], unwrap)
     }
@@ -145,14 +148,14 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
 
   # unpack vegp
   vegp = lapply(vegp, unwrap)
-  soil = unwrap(soil)
-  elev = unwrap(elev)
-  asp = unwrap(asp)
-  slp = unwrap(slp)
-  dtmc = unwrap(dtmc)
+  soil = terra::unwrap(soil)
+  elev = terra::unwrap(elev)
+  asp = terra::unwrap(asp)
+  slp = terra::unwrap(slp)
+  dtmc = terra::unwrap(dtmc)
 
   # Loop through GEDI points and calculate vertical microclimate gradient for each
-  v = foreach(i = 1:nrow(gedi), .combine = rbind) %do% {
+  v = foreach::foreach(i = 1:nrow(gedi), .combine = rbind) %do% {
     print(i)
 
     # If we are modelling for only the month in which the GEDI point was observed
@@ -174,7 +177,7 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
     clim_point = clim_distweight(lon = as.numeric(gedi[i, "lon_lm_a0"]), lat = as.numeric(gedi[i,"lat_lm_a0"]),
                                  climri, tmei) %>%
       dplyr::select(!timezone) %>%
-      mutate(obs_time = format(obs_time, format = "%Y-%m-%d %H:%M:%S")) %>%
+      dplyr::mutate(obs_time = format(obs_time, format = "%Y-%m-%d %H:%M:%S")) %>%
       as.data.frame()
 
     # extract dtmc and elevation at point
@@ -194,7 +197,7 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
     pai_z = as.numeric(gedi[i, pai_a0:pai_l21])
     pavd = as.numeric(gedi[i,pavd_0_5:pavd_95_100]) # pavd
 
-    paii = .pai_vertprofile(pai_z, h, vertpai_method)
+    paii = .pai_vertprofile(pai_z, h, pai, vertpai_method)
 
     # If we want to model climate over an entire year, we need monthly estimates of pai
     # MODIS provides temporally resolved PAI, but GEDI is a single time point
@@ -206,8 +209,9 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
     # I also should be estimating temporal variability in clumpiness, which I am not currently doing
 
     # get vertical profile by season
+    # THIS NEEDS WORK AND CHECKING FOR METHODS USED TO DERIVE SEASONALITY
     if(method == "temporal_year") {
-      modis = rast(modis_path)
+      modis = terra::rast(modis_path)
       pai_z_season = pai_seasonality(gedi[i,], xy_crs = "epsg:4326", modis)
       pai = pai_z_season[[1]]
       paii = pai_z_season[[2]]
@@ -231,8 +235,8 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
 
     # get ground parameters based on soilgrids and average values from micropoint::soilparams
     ground_p = .ground_point(soil, asp_p, slp_p,
-                             as.numeric(gedi[i, "lon_lm_a0"]),
-                             as.numeric(gedi[i, "lat_lm_a0"]))
+                             gedi[i, lon_lm_a0],
+                             gedi[i, lat_lm_a0])
 
     # apply dtr_correct
     clim_point_correct = micropoint:::dtr_correct(clim_point, zref = 2,
@@ -243,7 +247,7 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
     # takes into account temporal variation in PAI by modeling by month and changing PAI with each month based on changes in MODIS PAI
     if(method == "temporal_year") {
       # NEEDS SOME WORK, SEE JUNE 9 2025 IN LAB NOTEBOOK
-      mout = foreach(m=1:12, .combine = "rbind") %do% {
+      mout = foreach::foreach(m=1:12, .combine = "rbind") %do% {
         vegp_p$pai = pai[m]
         hrs = which(month(clim_point$obs_time)==m)
         out = micropoint::runpointmodel(
@@ -265,8 +269,12 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
       hrs = which(month(clim_point$obs_time)==pmonth)
       req = reqhgts
       if(is.na(sum(reqhgts))) {req = c(0.15, 2, seq(5,h - h%%5, 5), h-0.1)}
+
+      # test of max canopy height is in req, and if yes, don't model at top of canopy
+      if(h %in% req) {req = req[req!=h]}
+
       # pai is currently constant
-      mout = foreach(hi = req, .combine = rbind) %do% {
+      mout = forearch::foreach(hi = req, .combine = rbind) %do% {
         out = micropoint::runpointmodel(
           clim_point_correct[hrs,],
           reqhgt = hi,
@@ -318,7 +326,9 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
     mout
   }
   #return(vertmat)
-  write.csv(v, file = fout, row.names = F)
+  if(!is.na(fout)) {
+    write.csv(v, file = fout, row.names = F)
+  }
   return(v)
 }
 
