@@ -19,7 +19,7 @@ run_micropoint(
   plotout,
   n,
   maxiter,
-  fout,
+  fout = NA,
   modis_path,
   reqhgts = NA,
   vertpai_method = "pai"

@@ -52,9 +52,9 @@ clim_distweight = function(lon, lat, climr, tme) {
   nms = names(climr)
 
   # get climate data at four cells nearest focal point
-  clim_point = foreach(c = 1:length(climr), .combine = "cbind") %do% {
+  clim_point = foreach::foreach(c = 1:length(climr), .combine = "cbind") %do% {
     df = terra::extract(climr[[c]], focal[,c('x', 'y')])
-    df = df %>%  pivot_longer(2:(length(tme)+1), names_to = "obs_time", values_to = nms[c])
+    df = df %>%  tidyr::pivot_longer(2:(length(tme)+1), names_to = "obs_time", values_to = nms[c])
     if(c > 1) {
       df = df[,3]
     }
@@ -255,10 +255,10 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
 
   crop_fast = function(r, e) {
 
-    colmin = colFromX(r, e[1])
-    colmax = colFromX(r, e[2])
-    rowmin = rowFromY(r, e[4]) # 4 because spatrasters indexed from topleft corner
-    rowmax = rowFromY(r, e[3])
+    colmin = terra::colFromX(r, e[1])
+    colmax = terra::colFromX(r, e[2])
+    rowmin = terra::rowFromY(r, e[4]) # 4 because spatrasters indexed from topleft corner
+    rowmax = terra::rowFromY(r, e[3])
 
     rcrop = r[rowmin:rowmax, colmin:colmax, drop = F]
     return(rcrop)
@@ -281,14 +281,14 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
 
       # Subset down to desired spatial extent
       # r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
-      r <- crop_fast(r, e)
+      r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
       return(r)
     })
 
 
     # Add land-sea mask into the raster list
     lsm = terra::crop(land_sea_mask, var_list[[1]])
-    lsm = resample(lsm, var_list[[1]][[1]], method = "average")
+    lsm = terra::resample(lsm, var_list[[1]][[1]], method = "average")
     var_list[[12]] = lsm
 
     names(var_list) <- c(varname_list, "lsm")
@@ -310,7 +310,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
 
       # Subset down to desired spatial extent
       #r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
-      r <- crop_fast(r, e)
+      r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
       return(r)
     })
 

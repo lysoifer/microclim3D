@@ -5,6 +5,7 @@
 #'Each tile is 1x1 degree. Cleaning of GEDI data was done following methods in
 #'Burns et al. 2024. Multi-resolution gredded maps of vegetation structure from GEDI
 #'https://doi.org/10.1038/s41597-024-03668-4
+#'These points all have leaf on conditions
 #'
 #' @param e spatraster, spatvector, or spatextent
 #' @param fpath file path for downloaded GEDI tiles
@@ -159,8 +160,8 @@ get_modis_lc = function(e, start, end, usr, pwd, collection = "MCD12Q1.061",
                         variables = c("LC_Type1", "QC"), regions, outpath) {
 
   # convert roi to sf polygons
-  roi = lapply(e, as.polygons, crs = "epsg:4326")
-  roi = vect(roi)
+  roi = lapply(e, terra::as.polygons, crs = "epsg:4326")
+  roi = terra::vect(roi)
   roi$id = regions
   roi = sf::st_as_sf(roi)
 
@@ -188,4 +189,63 @@ get_modis_lc = function(e, start, end, usr, pwd, collection = "MCD12Q1.061",
   return(res_dl)
 }
 
+
+#'Find gedi orbits
+#'@description Define Function to Query CMR
+#'The function returns a list of links to download the files of GEDI transects intersecting the bounding box
+#'sub-orbit V2 granules directly from the LP DAAC's Data Pool.
+#'
+#'@param product can be  'GEDI01_B.002', 'GEDI02_A.002', 'GEDI02_B.002'
+#'@param bbox bounding box coords in LL Longitude, LL Latitude, UR Longitude, UR Latitude format
+#' bbox should be a character "LLlong,LLlat,URlong,URlat" coordinates in WGS84
+#'
+#' @return list of granules with shots in bbox
+#'
+#' @export
+gedi_finder <- function(product, bbox) {
+
+  # Define the base CMR granule search url, including LPDAAC provider name and max page size (2000 is the max allowed)
+
+  cmr <- "https://cmr.earthdata.nasa.gov/search/granules.json?pretty=true&provider=LPCLOUD&page_size=2000&concept_id="
+
+  # Set up list where key is GEDI shortname + version and value is CMR Concept ID
+  concept_ids <- list('GEDI01_B.002'='C2142749196-LPCLOUD',
+                      'GEDI02_A.002'='C2142771958-LPCLOUD',
+                      'GEDI02_B.002'='C2142776747-LPCLOUD')
+
+  # CMR uses pagination for queries with more features returned than the page size
+  page <- 1
+  bbox <- sub(' ', '', bbox)  # Remove any white spaces
+  granules <- list()          # Set up a list to store and append granule links to
+
+  # Send GET request to CMR granule search endpoint w/ product concept ID, bbox & page number
+  cmr_response <- GET(sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page))
+
+  # Verify the request submission was successful
+  if (cmr_response$status_code==200){
+
+    # Send GET request to CMR granule search endpoint w/ product concept ID, bbox & page number, format return as a list
+    cmr_url <- sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page)
+    cmr_response <- content(GET(cmr_url))$feed$entry
+
+    # If 2000 features are returned, move to the next page and submit another request, and append to the response
+    while(length(cmr_response) %% 2000 == 0){
+      page <- page + 1
+      cmr_url <- sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page)
+      cmr_response <- c(cmr_response, content(GET(cmr_url))$feed$entry)
+    }
+
+    # CMR returns more info than just the Data Pool links, below use for loop to grab each DP link, and add to list
+    for (i in 1:length(cmr_response)) {
+      granules[[i]] <- cmr_response[[i]]$links[[1]]$href
+    }
+
+    # Return the list of links
+    return(granules)
+  } else {
+
+    # If the request did not complete successfully, print out the response from CMR
+    print(content(GET(sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page)))$errors)
+  }
+}
 

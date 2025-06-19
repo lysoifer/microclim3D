@@ -23,4 +23,5 @@ Download cleaned tiles of NASA GEDI L2b data. Tiles are indexed by the lower lef
 Each tile is 1x1 degree. Cleaning of GEDI data was done following methods in
 Burns et al. 2024. Multi-resolution gredded maps of vegetation structure from GEDI
 https://doi.org/10.1038/s41597-024-03668-4
+These points all have leaf on conditions
 }
