@@ -104,6 +104,31 @@ vegp_point = function(vegp, lon, lat, pai, h) {
 #' @param lat latitude decimal degrees
 .ground_point = function(soil, asp_p, slp_p, lon, lat) {
   soilclass = terra::extract(soil, data.frame(lon, lat), method = "bilinear")
+  # if extracting returns NA, then calculate soil as weighted mean of 8 nearest neighbors
+  # using inverse distance weighting
+  if(any(is.na(soilclass))) {
+    res = res(soil)[1] # get resolution
+    # find x and y coords around point
+    x = c(lon-res, lon, lon+res)
+    y = c(lat-res, lat, lat+res)
+    xy = expand.grid(x,y)
+    # extract values at surrounding points
+    xyvals = extract(soil, xy, xy = T)
+    # find distance to surrounding points
+    xyvals$dists = as.numeric(distance(data.frame(lon, lat), xy, lonlat = T))
+    # calculate inverse distance weights and weight values for sand, silt, and clay
+    xyvals = arrange(xyvals, dists) %>%
+      mutate(wts = 1/dists^2,
+             wts = ifelse(is.na(`clay_mean_0-5cm`), NA, wts),
+             wts = wts/sum(wts, na.rm = T),
+             clay.wts = `clay_mean_0-5cm` * wts,
+             sand.wts = `sand_mean_0-5cm` * wts,
+             silt.wts = `silt_mean_0-5cm` * wts)
+    # sum weighted values
+    vals = apply(xyvals[,10:12], 2, sum, na.rm = T)
+    soilclass[1,2:4] = vals
+  }
+
   colnames(soilclass) = c("ID", "CLAY", "SAND", "SILT")
 
   # classify soil texture according to USDA classification
