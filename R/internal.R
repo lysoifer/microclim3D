@@ -125,7 +125,7 @@ vegp_point = function(vegp, lon, lat, pai, h) {
              sand.wts = `sand_mean_0-5cm` * wts,
              silt.wts = `silt_mean_0-5cm` * wts)
     # sum weighted values
-    vals = apply(xyvals[,10:12], 2, sum, na.rm = T)
+    vals = apply(xyvals[,9:11], 2, sum, na.rm = T)
     soilclass[1,2:4] = vals
   }
 
