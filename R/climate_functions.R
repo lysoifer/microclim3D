@@ -270,22 +270,39 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
   if(!("lsm" %in% varnames)) {
     varname_list = grep("lsm", varname_list, value = T, invert = T)
 
-    var_list = lapply(varname_list, function(v) {
+    var_list = list()
+    for(v in varname_list) {
       # subset down to desired time period
       # terra::time() not identifying time data of ERA5 data from new CDS, so
       # use nc_datetimes
       r <- terra::rast(nc, subds = v)
 
-      # Subset down to desired spatial extent
-      r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
-      # r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
-
       r <- r[[as.POSIXct(nc_datetimes, tz = "UTC", origin = "1900-01-01") %in% tme]]
       # Name layers as timesteps
       names(r) <- tme
 
-      return(r)
-    })
+      # Subset down to desired spatial extent
+      r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
+      # r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
+      var_list[[v]] = r
+    }
+
+    # var_list = lapply(varname_list, function(v) {
+    #   # subset down to desired time period
+    #   # terra::time() not identifying time data of ERA5 data from new CDS, so
+    #   # use nc_datetimes
+    #   r <- terra::rast(nc, subds = v)
+    #
+    #   # Subset down to desired spatial extent
+    #   r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
+    #   # r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
+    #
+    #   r <- r[[as.POSIXct(nc_datetimes, tz = "UTC", origin = "1900-01-01") %in% tme]]
+    #   # Name layers as timesteps
+    #   names(r) <- tme
+    #
+    #   return(r)
+    # })
 
 
     # Add land-sea mask into the raster list
