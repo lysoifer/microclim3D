@@ -89,7 +89,7 @@ clim_distweight = function(lon, lat, climr, tme) {
 #' Process era5 data using extract_clima
 #' @description
 #' Forked from mcera5::extract_clima. Adjustments include, faster cropping to extent
-#' and addtion of land-sea mask separately from the era5.nc file
+#' and addition of land-sea mask separately from the era5.nc file
 #'
 #' @param nc character vector containing the path to the nc file. Use the
 #' `build_era5_request` and `request_era5` functions to acquire an nc file with
@@ -275,13 +275,15 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
       # terra::time() not identifying time data of ERA5 data from new CDS, so
       # use nc_datetimes
       r <- terra::rast(nc, subds = v)
+
+      # Subset down to desired spatial extent
+      r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
+      # r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
+
       r <- r[[as.POSIXct(nc_datetimes, tz = "UTC", origin = "1900-01-01") %in% tme]]
       # Name layers as timesteps
       names(r) <- tme
 
-      # Subset down to desired spatial extent
-      # r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
-      r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
       return(r)
     })
 
