@@ -192,8 +192,62 @@ reclass_landcover = function(lc, type = "modis_igbp") {
                    255,NA),
                  byrow = T, ncol = 2)
   }
+  if(type == "copernicus") {
+    # closed and open forest, unknown classified as mixed forest
+    # shrubs classified as closed shrublan
+    # herbaceous vegetation classified as tall grassland
+    # herbaceous wetland = permanent wetland
+    # moss and lichen = barren or sparsely vegetated
+    # snow and ice = barren or sparsely vegetated
+    rcl = matrix(c(111,1,
+                   113,3,
+                   112,2,
+                   114,4,
+                   115,5,
+                   116,5,
+                   121,1,
+                   123,3,
+                   122,2,
+                   124,4,
+                   125,5,
+                   126,5,
+                   20,6,
+                   30,11,
+                   90,12,
+                   100,16,
+                   60,16,
+                   40,15,
+                   50,14,
+                   70,16,
+                   80,NA,
+                   200,NA),
+                 byrow = T, ncol=2)
+  }
 
   reclass = classify(lc, rcl, others = NULL)
   return(reclass)
 }
+
+#' Convert a bounding box to a character vector
+#' @param bbox an object that has a bounding box. Currently restricted to a SpatVector or SpatRaster, but will add functionality for other objects
+#' @param coord_order the order in which coordinates should be output (e.g., "xmin,xmax,ymin,ymax") with no white spaces
+.bbox_to_char = function(bbox, coord_order) {
+  # check object type that bbox is derived from
+
+  if(is(bbox, "SpatVector") | is(bbox, "SpatRaster")) {
+    e = ext(bbox)
+    e = c(e[1], e[2], e[3], e[4])
+  }
+
+  c = stringr::str_split_1(coord_order, ",")
+  # reorder vector to requested order
+  e = e[c]
+  e = paste(e, collapse = ",")
+
+  return(e)
+}
+
+
+
+
 
