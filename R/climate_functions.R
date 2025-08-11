@@ -282,8 +282,8 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
       names(r) <- tme
 
       # Subset down to desired spatial extent
-      r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
-      # r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
+      # r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
+      r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
       var_list[[v]] = r
     }
 
@@ -306,14 +306,15 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
 
 
     # Add land-sea mask into the raster list
-    lsm = terra::crop(land_sea_mask, var_list[[1]])
+    lsm = crop_fast(land_sea_mask, var_list[[1]])
     lsm = terra::resample(lsm, var_list[[1]][[1]], method = "average")
     var_list[[12]] = lsm
 
     names(var_list) <- c(varname_list, "lsm")
 
   } else {
-    var_list <- lapply(varname_list, function(v) {
+    var_list = list()
+    for(v in varname_list) {
       if (v == "lsm") {
         # only need one timestep for land-sea mask
         r <- terra::rast(nc, subds = v)[[1]]
@@ -330,8 +331,27 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
       # Subset down to desired spatial extent
       #r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
       r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
-      return(r)
-    })
+      var_list[[v]] = r
+    }
+    # var_list <- lapply(varname_list, function(v) {
+    #   if (v == "lsm") {
+    #     # only need one timestep for land-sea mask
+    #     r <- terra::rast(nc, subds = v)[[1]]
+    #   } else {
+    #     # For all others, subset down to desired time period
+    #     # terra::time() not identifying time data of ERA5 data from new CDS, so
+    #     # use nc_datetimes
+    #     r <- terra::rast(nc, subds = v)
+    #     r <- r[[as.POSIXct(nc_datetimes, tz = "UTC") %in% tme]]
+    #     # Name layers as timesteps
+    #     names(r) <- tme
+    #   }
+    #
+    #   # Subset down to desired spatial extent
+    #   #r <- terra::crop(r, terra::ext(long_min, long_max, lat_min, lat_max))
+    #   r <- crop_fast(r, terra::ext(long_min, long_max, lat_min, lat_max))
+    #   return(r)
+    # })
 
     names(var_list) <- c(varname_list)
   }
