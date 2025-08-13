@@ -267,7 +267,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
 
   # Remove land-sea mask from varname list if using pre-downloaded layers
   # We will pull in the land-sea mask separately
-  fun = function(nc, v, e) {
+  fun = function(nc, v, e, nc_datetimes) {
     r <- terra::rast(nc, subds = v)
     r <- r[[as.POSIXct(nc_datetimes, tz = "UTC", origin = "1900-01-01") %in% tme]]
     names(r) <- tme
@@ -280,17 +280,17 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
     var_list = list()
 
     e = terra::ext(long_min, long_max, lat_min, lat_max)
-    var_list[["t2m"]] = fun(nc, "t2m", e)
-    var_list[["d2m"]] = fun(nc, "d2m", e)
-    var_list[["sp"]] = fun(nc, "sp", e)
-    var_list[["u10"]] = fun(nc, "u10", e)
-    var_list[["v10"]] = fun(nc, "v10", e)
-    var_list[["tp"]] = fun(nc, "tp", e)
-    var_list[["tcc"]] = fun(nc, "tcc", e)
-    var_list[["msnlwrf"]] = fun(nc, "msnlwrf", e)
-    var_list[["msdwlwrf"]] = fun(nc, "msdwlwrf", e)
-    var_list[["fdir"]] = fun(nc, "fdir", e)
-    var_list[["ssrd"]] = fun(nc, "ssrd", e)
+    var_list[["t2m"]] = fun(nc, "t2m", e, nc_datetimes)
+    var_list[["d2m"]] = fun(nc, "d2m", e, nc_datetimes)
+    var_list[["sp"]] = fun(nc, "sp", e, nc_datetimes)
+    var_list[["u10"]] = fun(nc, "u10", e, nc_datetimes)
+    var_list[["v10"]] = fun(nc, "v10", e, nc_datetimes)
+    var_list[["tp"]] = fun(nc, "tp", e, nc_datetimes)
+    var_list[["tcc"]] = fun(nc, "tcc", e, nc_datetimes)
+    var_list[["msnlwrf"]] = fun(nc, "msnlwrf", e, nc_datetimes)
+    var_list[["msdwlwrf"]] = fun(nc, "msdwlwrf", e, nc_datetimes)
+    var_list[["fdir"]] = fun(nc, "fdir", e, nc_datetimes)
+    var_list[["ssrd"]] = fun(nc, "ssrd", e, nc_datetimes)
 
     # for(v in varname_list) {
     #   # subset down to desired time period
@@ -327,7 +327,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
 
 
     # Add land-sea mask into the raster list
-    lsm = crop_fast(land_sea_mask, terra::ext(long_min, long_max, lat_min, lat_max))
+    lsm = crop_fast(land_sea_mask, e)
     lsm = terra::resample(lsm, var_list[[1]][[1]], method = "average")
     var_list[[12]] = lsm
 
