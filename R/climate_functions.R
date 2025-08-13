@@ -291,9 +291,6 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
     var_list[["msdwlwrf"]] = fun(nc, "msdwlwrf", e)
     var_list[["fdir"]] = fun(nc, "fdir", e)
     var_list[["ssrd"]] = fun(nc, "ssrd", e)
-    var_list[["lsm"]] = fun(nc, "lsm", e)
-
-
 
     # for(v in varname_list) {
     #   # subset down to desired time period
