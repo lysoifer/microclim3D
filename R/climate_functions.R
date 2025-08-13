@@ -327,7 +327,7 @@ extract_clima_2 = function(nc, long_min, long_max, lat_min, lat_max, start_time,
 
 
     # Add land-sea mask into the raster list
-    lsm = crop_fast(land_sea_mask, var_list[[1]])
+    lsm = crop_fast(land_sea_mask, terra::ext(long_min, long_max, lat_min, lat_max))
     lsm = terra::resample(lsm, var_list[[1]][[1]], method = "average")
     var_list[[12]] = lsm
 
