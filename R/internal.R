@@ -220,7 +220,8 @@ reclass_landcover = function(lc, type = "modis_igbp") {
                    50,14,
                    70,16,
                    80,NA,
-                   200,NA),
+                   200,NA,
+                   0,NA),
                  byrow = T, ncol=2)
   }
 
