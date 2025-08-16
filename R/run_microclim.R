@@ -274,7 +274,7 @@ run_micropoint = function(tme, gedi, climr, vegp, soil, elev, asp, slp, dtmc,
       if(h %in% req) {req = req[req!=h]}
 
       # pai is currently constant
-      mout = forearch::foreach(hi = req, .combine = rbind) %do% {
+      mout = foreach::foreach(hi = req, .combine = rbind) %do% {
         out = micropoint::runpointmodel(
           clim_point_correct[hrs,],
           reqhgt = hi,
