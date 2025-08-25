@@ -134,7 +134,7 @@ vegp_point = function(vegp, lon, lat, pai, h) {
   # check that percentage of soilclasses sum to 100
   checksum = sum(soilclass[,2:4])
   if(checksum != 100) {
-    x = abs(100-checksum)
+    x = 100-checksum
 
     # add x to one of sand, silt, or clay (small amount should not impact result, but chosse sand, silt, or clay randomly)
     samp = sample(1:3, 1)
