@@ -196,8 +196,7 @@ get_modis_lc = function(e, start, end, usr, pwd, collection = "MCD12Q1.061",
 #'sub-orbit V2 granules directly from the LP DAAC's Data Pool.
 #'
 #'@param product can be  'GEDI01_B.002', 'GEDI02_A.002', 'GEDI02_B.002'
-#'@param bbox bounding box coords in LL Longitude, LL Latitude, UR Longitude, UR Latitude format
-#' bbox should be a character "LLlong,LLlat,URlong,URlat" coordinates in WGS84
+#'@param bbox area of interest. bbox can be a character "LLlong,LLlat,URlong,URlat" coordinates in WGS84, a spatVector, or a spatRaster
 #'
 #' @return list of granules with shots in bbox
 #'
@@ -213,26 +212,30 @@ gedi_finder <- function(product, bbox) {
                       'GEDI02_A.002'='C2142771958-LPCLOUD',
                       'GEDI02_B.002'='C2142776747-LPCLOUD')
 
+  if(is(bbox, "SpatVector") | is(bbox, "SpatRaster")) {
+    bbox = .bbox_to_char(bbox, "xmin,ymin,xmax,ymax")
+  }
+
   # CMR uses pagination for queries with more features returned than the page size
   page <- 1
   bbox <- sub(' ', '', bbox)  # Remove any white spaces
   granules <- list()          # Set up a list to store and append granule links to
 
   # Send GET request to CMR granule search endpoint w/ product concept ID, bbox & page number
-  cmr_response <- GET(sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page))
+  cmr_response <- httr::GET(sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page))
 
   # Verify the request submission was successful
   if (cmr_response$status_code==200){
 
     # Send GET request to CMR granule search endpoint w/ product concept ID, bbox & page number, format return as a list
     cmr_url <- sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page)
-    cmr_response <- content(GET(cmr_url))$feed$entry
+    cmr_response <- httr::content(httr::GET(cmr_url))$feed$entry
 
     # If 2000 features are returned, move to the next page and submit another request, and append to the response
     while(length(cmr_response) %% 2000 == 0){
       page <- page + 1
       cmr_url <- sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page)
-      cmr_response <- c(cmr_response, content(GET(cmr_url))$feed$entry)
+      cmr_response <- c(cmr_response, httr::content(httr::GET(cmr_url))$feed$entry)
     }
 
     # CMR returns more info than just the Data Pool links, below use for loop to grab each DP link, and add to list
@@ -245,7 +248,7 @@ gedi_finder <- function(product, bbox) {
   } else {
 
     # If the request did not complete successfully, print out the response from CMR
-    print(content(GET(sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page)))$errors)
+    print(httr::content(httr::GET(sprintf("%s%s&bounding_box=%s&pageNum=%s", cmr, concept_ids[[product]],bbox,page)))$errors)
   }
 }
 
