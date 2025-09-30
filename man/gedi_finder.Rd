@@ -9,8 +9,7 @@ gedi_finder(product, bbox)
 \arguments{
 \item{product}{can be  'GEDI01_B.002', 'GEDI02_A.002', 'GEDI02_B.002'}
 
-\item{bbox}{bounding box coords in LL Longitude, LL Latitude, UR Longitude, UR Latitude format
-bbox should be a character "LLlong,LLlat,URlong,URlat" coordinates in WGS84}
+\item{bbox}{area of interest. bbox can be a character "LLlong,LLlat,URlong,URlat" coordinates in WGS84, a spatVector, or a spatRaster}
 }
 \value{
 list of granules with shots in bbox
