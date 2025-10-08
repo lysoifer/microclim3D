@@ -1,3 +1,14 @@
+#' get_grid:Make a global template for downloading gridded data
+#'
+#' @param crs character; coordinate reference system for the grid (default: "epsg:4326")
+#' @param tilesize numeric; tilesize for the grid (180 and 90 should be evenly divisible by tile size)
+.get_grid = function(crs, tilesize) {
+  template = ext(-180,180,-90,90)
+  template = project(template, from = "epsg:4326", to = crs)
+  template = rast(template, resolution = res, crs = crs)
+  return(template)
+}
+
 #' Reproject big raster
 #' Crop and reproject large raster to specified extent and projection of extent
 #'
