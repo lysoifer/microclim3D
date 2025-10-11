@@ -149,7 +149,7 @@ get_soil = function(e, outdir, overwrite = FALSE) {
 #'
 #' @export
 
-get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326") {
+get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326", overwrite = T) {
   # define world grid for downloading data
   # use 5degree file size
   grid = .get_grid(crs = "epsg:4326", tilesize = 5)
