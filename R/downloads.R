@@ -182,7 +182,7 @@ get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326",
 
       # make a temporary directory to store downloads - necessary to parallelize so workers don't share tempdirs
       tempdir1= paste0(tempdir_location, i, cc)
-      if(!dir.exists(tempdir1)) {dir.create(tempdir_location, recursive = T)}
+      if(!dir.exists(tempdir1)) {dir.create(tempdir1, recursive = T)}
 
       if(!file.exists(fname) | overwrite) {
         soil = microclimdata::soildata_download(r, pathdir = tempdir1, deletefiles = T)
