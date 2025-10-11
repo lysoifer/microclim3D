@@ -60,5 +60,5 @@ point to run the model}
 }
 \description{
 Forked from mcera5::extract_clima. Adjustments include, faster cropping to extent
-and addtion of land-sea mask separately from the era5.nc file
+and addition of land-sea mask separately from the era5.nc file
 }

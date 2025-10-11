@@ -3,7 +3,9 @@
 \name{get_soil}
 \alias{get_soil}
 \title{get_soil
-Download sand, silt, and clay content at 0-5 cm depth from soilgrids database}
+Download sand, silt, and clay content at 0-5 cm depth from soilgrids database
+This is an older version of the function (pre-microclimdata package)
+Preference is to use get_soil2}
 \usage{
 get_soil(e, outdir, overwrite = FALSE)
 }
@@ -20,4 +22,6 @@ saves spatraster to outdir and returns spatraster
 \description{
 get_soil
 Download sand, silt, and clay content at 0-5 cm depth from soilgrids database
+This is an older version of the function (pre-microclimdata package)
+Preference is to use get_soil2
 }

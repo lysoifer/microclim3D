@@ -116,6 +116,8 @@ get_era5 = function(st_time, en_time, uid, file_prefix, file_path, e, overwrite 
 
 #' get_soil
 #' Download sand, silt, and clay content at 0-5 cm depth from soilgrids database
+#' This is an older version of the function (pre-microclimdata package)
+#' Preference is to use get_soil2
 #' @param e spatvector giving extent over which to get soil data
 #' @param outdir filename to save soil data (ending in .tif)
 #' @param overwrite whether to overwrite file is it exists (TRUE) or not (default FALSE)
@@ -134,6 +136,60 @@ get_soil = function(e, outdir, overwrite = FALSE) {
     overwrite = overwrite
   )
 }
+
+
+#' get_soil2
+#' Download sand, silt, and clay content at 0-5 cm depth from soilgrids database using microclimdata package
+#' @param x spatVector, list of spatrasters, or dataframe of coordinates
+#' @param coords if providing a dataframe, the column names for x and y coordinates
+#' @param crs if providing a dataframe, the crs
+#' @param overwrite whether to overwrite file is it exists (TRUE) or not (default FALSE)
+#'
+#' @returns saves spatraster to outdir and returns spatraster
+#'
+#' @export
+
+get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326") {
+  # define world grid for downloading data
+  grid = get_grid(crs = "epsg:4326", tilesize = 5)
+
+  for(i in 1:length(br)) {
+    # select the ith location object provided
+    if(class(x) == "SpatVector") {
+      xi = x[i]
+    }
+    if(class(x) == "data.frame") {
+      xi = x[i,c(coords[1], coords[2])]
+      xi = vect(xi, geom = c(coords[1], coords[2]), crs = crs)
+    }
+    if(class(x) == "list") {
+      xi = x[[i]]
+      xi = ext(xi)
+    }
+    c = cells(grid, xi)[,2]
+    for(cc in c) {
+      # extract cell from the world grid to download
+      r = grid[cc, drop = F]
+      values(r) = 1
+
+      # name for writing out tiles by extent
+      ename = paste(c(ext(r)[1], ext(r)[2], ext(r)[3], ext(r)[4]), collapse = "_")
+      fout = paste0(soilout, "soilGrids_depthWeightedSoil_", ename, ".tif")
+
+      # make a temporary directory to store downloads - necessary to parallelize so workers don't share tempdirs
+      tempdir1= paste0(tempdir_location, i, cc)
+      if(!dir.exists(tempdir1)) {dir.create(tempdir_location, recursive = T)}
+
+      if(!file.exists(fout) | overwrite) {
+        soil = microclimdata::soildata_download(r, pathdir = tempdir1, deletefiles = T)
+        writeRaster(soil, fout)
+      }
+      unlink(tempdir1)
+    }
+  }
+}
+
+
 
 
 #' Download MODIS data
