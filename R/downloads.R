@@ -178,7 +178,7 @@ get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326",
 
       # name for writing out tiles by extent
       ename = paste(c(ext(r)[1], ext(r)[2], ext(r)[3], ext(r)[4]), collapse = "_")
-      fout = paste0(soilout, "soilGrids_depthWeightedSoil_", ename, ".tif")
+      fout = paste0(fout, "soilGrids_depthWeightedSoil_", ename, ".tif")
 
       # make a temporary directory to store downloads - necessary to parallelize so workers don't share tempdirs
       tempdir1= paste0(tempdir_location, i, cc)
