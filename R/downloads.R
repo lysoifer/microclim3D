@@ -186,7 +186,7 @@ get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326",
 
       if(!file.exists(fout) | overwrite) {
         soil = microclimdata::soildata_download(r, pathdir = tempdir1, deletefiles = T)
-        writeRaster(soil, fout)
+        writeRaster(soil, fout, overwrite)
       }
       unlink(tempdir1)
     }
