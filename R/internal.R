@@ -5,7 +5,7 @@
 .get_grid = function(crs, tilesize) {
   template = ext(-180,180,-90,90)
   template = project(template, from = "epsg:4326", to = crs)
-  template = rast(template, resolution = res, crs = crs)
+  template = rast(template, resolution = tilesize, crs = crs)
   return(template)
 }
 
