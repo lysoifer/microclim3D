@@ -151,18 +151,19 @@ get_soil = function(e, outdir, overwrite = FALSE) {
 
 get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326") {
   # define world grid for downloading data
-  grid = get_grid(crs = "epsg:4326", tilesize = 5)
+  # use 5degree file size
+  grid = .get_grid(crs = "epsg:4326", tilesize = 5)
 
   for(i in 1:length(br)) {
     # select the ith location object provided
-    if(class(x) == "SpatVector") {
+    if(is(x, "SpatVector")) {
       xi = x[i]
     }
-    if(class(x) == "data.frame") {
+    if(is(x, "data.frame")) {
       xi = x[i,c(coords[1], coords[2])]
-      xi = vect(xi, geom = c(coords[1], coords[2]), crs = crs)
+      xi = terra::vect(xi, geom = c(coords[1], coords[2]), crs = crs)
     }
-    if(class(x) == "list") {
+    if(is(x, "list")) {
       xi = x[[i]]
       xi = ext(xi)
     }
