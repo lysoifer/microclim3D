@@ -143,13 +143,16 @@ get_soil = function(e, outdir, overwrite = FALSE) {
 #' @param x spatVector, list of spatrasters, or dataframe of coordinates
 #' @param coords if providing a dataframe, the column names for x and y coordinates
 #' @param crs if providing a dataframe, the crs
+#' @param tempdir_location directory to create tempdir folders
+#' @param fout directory to story output
 #' @param overwrite whether to overwrite file is it exists (TRUE) or not (default FALSE)
 #'
 #' @returns saves spatraster to outdir and returns spatraster
 #'
 #' @export
 
-get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326", overwrite = T) {
+get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326",
+                     tempdir_location, fout, overwrite = T) {
   # define world grid for downloading data
   # use 5degree file size
   grid = .get_grid(crs = "epsg:4326", tilesize = 5)
