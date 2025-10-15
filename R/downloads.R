@@ -155,9 +155,10 @@ get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326",
                      tempdir_location, fout, overwrite = T) {
   # define world grid for downloading data
   # use 5degree file size
-  grid = .get_grid(crs = "epsg:4326", tilesize = 5)
+  grid = microclim3D:::.get_grid(crs = "epsg:4326", tilesize = 5)
 
-  for(i in 1:length(br)) {
+  f = c() # list of filepaths with soil data
+  for(i in 1:nrow(x)) {
     # select the ith location object provided
     if(is(x, "SpatVector")) {
       xi = x[i]
@@ -189,8 +190,11 @@ get_soil2 = function(x, coords = c("x", "y"), crs = "epsg:4326",
         writeRaster(soil, fname, overwrite)
       }
       unlink(tempdir1)
+      f = c(f, fname)
     }
   }
+  f = unique(f)
+  return(f)
 }
 
 
