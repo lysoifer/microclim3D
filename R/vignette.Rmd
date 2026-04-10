@@ -1,0 +1,96 @@
+---
+title: "vignette"
+output: html_document
+---
+
+Get and process climate data
+```{r}
+get_climate(source = "era5", r, tme, creds, out = "grid", rawout=NA, processout, file_prefix, clean = F)
+```
+
+
+Model vertical microclimates using GEDI data to derive information on the vertical distribution of plant area index.
+
+Download GEDI data in a region of interest. As an example, we will use a 1km sqaure area in Mark Twain National Forest in Missouri, USA.
+
+```{r}
+pt = data.frame(lon = -91.08, lat = 37.69, region = "mark_twain_nf")
+pt = vect(pt, geom = c("lon", "lat"), crs = "epsg:4326")
+bbox = buffer(pt, 10)
+e = ext(bbox)
+```
+
+Find gedi granules that cover the AOI.
+```{r}
+granules = gedi_finder(product = 'GEDI02_B.002', bbox = bbox)
+
+```
+
+Download GEDI data. gediDownload is from rGEDI package.
+```{r}
+gediDownload(unlist(granules)[1], outdir = "C:/Users/lsoif/Dropbox (UFL)/projects/tools/microclim3D/data/gedi_L2b/")
+
+f = list.files("C:/Users/lsoif/Dropbox (UFL)/projects/tools/microclim3D/data/gedi_L2b/", pattern = ".h5", full.name = T)
+gedi = readLevel2B(f)
+#gedi = getLevel2BVPM(gedi, c("pgap_theta"))
+
+level2b = gedi@h5
+groups_id<-grep("BEAM\\d{4}$",gsub("/","",
+                                     hdf5r::list.groups(level2b, recursive = F)), value = T)
+
+  m.dt<-data.table::data.table()
+  pb <- utils::txtProgressBar(min = 0, max = length(groups_id), style = 3)
+  i.s=0
+  for ( i in groups_id){
+    i.s<-i.s+1
+    utils::setTxtProgressBar(pb, i.s)
+    level2b_i<-level2b[[i]]
+    m<-data.table::data.table(
+      beam<-rep(i,length(level2b_i[["shot_number"]][])),
+      shot_number=level2b_i[["shot_number"]][],
+      algorithmrun_flag=level2b_i[["algorithmrun_flag"]][],
+      l2b_quality_flag=level2b_i[["l2b_quality_flag"]][],
+      delta_time=level2b_i[["geolocation/delta_time"]][],
+      lat_lowestmode=level2b_i[["geolocation/lat_lowestmode"]][],
+      lon_lowestmode=level2b_i[["geolocation/lon_lowestmode"]][],
+      elev_highestreturn=level2b_i[["geolocation/elev_highestreturn"]][],
+      elev_lowestmode=level2b_i[["geolocation/elev_lowestmode"]][],
+      height_lastbin=level2b_i[["geolocation/height_lastbin"]][],
+      height_bin0=level2b_i[["geolocation/height_bin0"]][],
+      pai_z=t(level2b_i[["pai_z"]][,1:level2b_i[["pai_z"]]$dims[2]]),
+      pgap_theta_z = level2b_i[["rv"]]$dims t(level2b_i[["pgap_theta_z"]][,1:level2b_i[["pgap_theta_z"]]$dims[2]]))
+    m.dt<-rbind(m.dt,m)
+  }
+  colnames(m.dt)<-c("beam","shot_number","algorithmrun_flag",
+                    "l2b_quality_flag","delta_time","lat_lowestmode",
+                    "lon_lowestmode","elev_highestreturn",
+                    "elev_lowestmode","height_lastbin",
+                    "height_bin0",paste0("pai_z",seq(0,30*5,5)[-31],"_",seq(5,30*5,5),"m"))
+  close(pb)
+
+ for (i in groups_id){
+    i.s<-i.s+1
+    utils::setTxtProgressBar(pb, i.s)
+    level2b_i<-level2b[[i]]
+    m<-data.table::data.table()
+    #col = cols[1]
+    for (col in cols) {
+      h5.address = var.map[[col]]
+      if (is.null(h5.address)) {
+        if (col %in% names(level2b_i)) {
+          h5.address = col
+        } else {
+          if (i.s == 1) warning(sprintf("The column '%s' is not available in the GEDI2B product for BEAM %s!", col, i))
+          next
+        }
+      }
+      m[,eval(col):=level2b_i[[h5.address]][]]
+    }
+    m.dt<-rbind(m.dt,m)
+  }
+
+
+level2b_i[[i]]
+
+```
+
