@@ -7,18 +7,22 @@
 #' @param tme POSIXct vector of hourly time intervals to download data (must be in UTC)
 #' @param out one of 'grid' or 'point' specifying whether to return a list of arrays of climate data or a data.frame for a single point location.
 #' @param creds dataframe with credentials as specified in microclimdata
-#' @param rawout directory to store raw downloaded data. If NA, a temporary directory will be created and deleted after running
-#' @param microout directory to store microclimate data grids processed for use in the models
+#' @param pathout directory to store data. Separate folders will be created for raw and processed data. raw downloaded data.
 #' @param file_prefix prefix used for file name
 #' @param clean logical; if T, deletes original downloads, if F, keeps original downloads
 #'
 #' @export
 #' @import microclimdata
-get_climate <- function(source, r, tme, creds, out = "grid", rawout=NA, processout, file_prefix, clean = F) {
-  if(is.na(rawout)) {dir.create(paste0(getwd(), "tempdir/"))}
+get_climate <- function(source, r, tme, creds, out = "grid", pathout, file_prefix, clean = F) {
+
+  # set file paths to save output data
+  s = format(tme[1], "%Y-%m-%d")
+  e = format(tme[length(tme)], "%Y-%m-%d")
+  processout <- paste0(pathout, "processed/climate/", source, "/")
+  rawout <- paste0(pathout, "raw/climate/", source, "/")
 
   # check if final output exists
-  clim_save = paste0(processout, "climdat.rds")
+  clim_save = paste0(processout, file_prefix, "_", s, "_", e, ".rds")
   dl = ifelse(file.exists(clim_save), F, T)
 
   if(source == "era5" & dl) {
