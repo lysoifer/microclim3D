@@ -2,32 +2,46 @@
 #' use functions from microclimdata package
 #' @param source character; source to get climate data. Accepts
 #' era5
-#' era5-hipergator: this gets data from Dave's splined tiles on hipergator
+#' era5-hipergator-splined: this gets data from Dave's splined tiles on hipergator
 #' @param r a SpatRaster object used as a template for downloading data with an EPSG code defined. Should be in a projected crs.
 #' @param tme POSIXct vector of hourly time intervals to download data (must be in UTC)
 #' @param out one of 'grid' or 'point' specifying whether to return a list of arrays of climate data or a data.frame for a single point location.
 #' @param creds dataframe with credentials as specified in microclimdata
+#' @param tilepath if source = era5-hipergator-splined, tilepath = path to splined  era5 tiles on hipergator
+#' @param lsmpath if source = era5-hipergator-splined, provide path to era5 land-sea-mask
 #' @param pathout directory to store data. Separate folders will be created for raw and processed data. raw downloaded data.
 #' @param file_prefix prefix used for file name
 #' @param clean logical; if T, deletes original downloads, if F, keeps original downloads
 #'
 #' @export
 #' @import microclimdata
-get_climate <- function(source, r, tme, creds, out = "grid", pathout, file_prefix, clean = F) {
+get_climate <- function(source, r, tme, creds, tilepath, lsmpath, out = "grid", pathout, file_prefix, clean = F) {
 
   # set file paths to save output data
-  s = format(tme[1], "%Y-%m-%d")
-  e = format(tme[length(tme)], "%Y-%m-%d")
+  st = format(tme[1], "%Y-%m-%d")
+  en = format(tme[length(tme)], "%Y-%m-%d")
   processout <- paste0(pathout, "processed/climate/", source, "/")
   rawout <- paste0(pathout, "raw/climate/", source, "/")
 
   # check if final output exists
-  clim_save = paste0(processout, file_prefix, "_", s, "_", e, ".rds")
+  clim_save = paste0(processout, file_prefix, "_", st, "_", en, ".rds")
   dl = ifelse(file.exists(clim_save), F, T)
 
   if(source == "era5" & dl) {
     req = microclimdata::era5_download(r, tme, creds, file_prefix, pathout = rawout, clean = T)
     climdat = microclimdata::era5_process(req, pathin = rawout, r, tme, out = out, resampleout = F)
+
+    if(!dir.exists(processout)) {dir.create(processout, recursive = T)}
+    saveRDS(climdat, clim_save)
+  }
+
+  if(source == "era5-hipergator-splined") {
+    yr = year(tme[1])
+    e = ext(r)
+    e = project(e, from = crs(r), to = "espg:4326")
+    tile = getera5tiles(e, tilepath, year = yr)
+    climdat = era_process_splinedtiles(path = tile, lsmpath, r, year, resampleout = FALSE)
+    climdat = lapply(climdat, wrap)
 
     if(!dir.exists(processout)) {dir.create(processout, recursive = T)}
     saveRDS(climdat, clim_save)
@@ -129,6 +143,125 @@ clim_distweight = function(lon, lat, climr, tme) {
   return(clim_point)
 
 }
+
+#' @title get splined era5 tile paths from Dave's downloads
+#' @param e spatExtent
+#' @param tilepath path to splined era5 tiles
+#' @param year year of climate data
+getera5tiles <- function(e, tilepath, year) {
+  xmn = e[1]
+  ymn = e[3]
+  xmx = e[2]
+  ymx = e[4]
+  # round xmin and ymin down to nearest 2.5
+  xmn = xmn%/%2.5*2.5
+  ymn = ymn%/%2.5*2.5
+
+  # round xmax and ymax up to nearest 2.5
+  xmx = ifelse(xmx %% 2.5 == 0, xmx%/%2.5*2.5,  xmx%/%2.5*2.5 + 2.5)
+  ymx = ifelse(ymx %% 2.5 == 0, ymx%/%2.5*2.5,  ymx%/%2.5*2.5 + 2.5)
+
+  x = seq(xmn, xmx-2.5, 2.5)
+  y = seq(ymn+2.5, ymx, 2.5)
+
+  crds = expand.grid(x,y)
+
+  # get file paths for the relevant tiles
+  path = paste0(tilepath, year, "/era5_", crds[,1], "_", crds[,2], "/")
+
+  return(path)
+}
+
+#' @title process pre-downloaded and splined era5 data
+#' @param path path to directory with nc files (located in /orange/scheffers/dklinges/soilTemp/SoilTemp-big-data/climate/era5/global/YYYY/era5_lon_lat/)
+#' @param lsmpath path to land-sea-mask
+#' @param r spatRaster template for output
+#' @param year year of climate data to obtain
+#' @param resampleout logical; if TRUE resamples era5 to template. default = F
+era_process_splinedtiles <- function(path, lsmpath, r, year, resampleout = FALSE) {
+  nc = list.files(path, full.names = T)
+  # get time
+  nc_file <- ncdf4::nc_open(nc[1])
+  # hourly time for the year
+  tme <- as.POSIXlt((ncdf4::ncvar_get(nc_file, "time")-1)*3600,
+                    origin = paste0(year, "-01-01 00:00"),
+                    tz = "UTC")
+  ncdf4::nc_close(nc_file)
+  # extract variables
+  varn <- c("t2m", "d2m", "sp", "u10" , "v10",  "tp", "msdwlwrf", "fdir", "ssrd", "lsm")
+  rlst <- list()
+  for (i in 1:9) rlst[[i]]<-rast(nc[which(grepl(varn[i], nc))])
+  lsm = rast(lsmpath)
+  lsm = resample(lsm, rlst[[1]][[1]])
+  rlst[[10]]<-lsm
+
+  # make sure everything is the same resolution
+  for(i in 2:10) {
+    if(any(res(rlst[[i]]) != res(rlst[[1]]))) {
+      fact = res(rlst[[i]])[1]/res(rlst[[1]])[1]
+      rlst[[i]] = disagg(rlst[[i]], fact)
+    }
+  }
+
+  tc <- rlst[[1]]-273.15
+  # coastal correction
+  if (any(terra::values(lsm) < 1)) {
+    # Calculate daily average
+    # Indices to associate each layer with its yday
+    ind <- rep(1:(dim(tc)[3]/24), each = 24)
+    # Average across days
+    tmean <- terra::tapp(tc, ind, fun = mean, na.rm = T)
+    # Repeat the stack 24 times to expand back out to original timeseries
+    tmean <- rep(tmean, 24)
+    # Sort according to names so that the stack is now in correct order: each
+    # daily mean, repeated 24 times
+    # your pasted command properly sorts the names, X1 to X365 (or X366)
+    tmean <- tmean[[paste0("X", sort(rep(seq(1:(dim(tc)[3]/24)), 24)))]]
+    m <- (1 - lsm) * 1.285 + 1
+    tdif <- (tc - tmean) * m
+    tc<- tmean + tdif
+  }
+  rlst[[1]]<-tc
+  # crop variables
+  e<-ext(r)
+  rr<-rast(e)
+  crs(rr)<-crs(r)
+  rll<-project(rr,"EPSG:4326")
+  ell<-ext(rll)
+  for (i in 1:10) rlst[[i]]<-crop(rlst[[i]],ell,snap='out')
+  if (resampleout) {
+    for (i in 1:10) {
+      if (crs(r) != crs(rll)) {
+        rlst[[i]]<-project(rlst[[i]],r)
+      } else {
+        rlst[[i]]<-resample(rlst[[i]],r)
+      }
+      rlst[[i]]<-mask(rlst[[i]],r)
+    }
+  }
+  rlsto<-list()
+  rte<-rlst[[1]]
+  rte<-rte[[1]]
+  # convert variables
+  rlsto[[1]]<-rlst[[1]]
+  rh <- microclimdata:::.rast((microclimdata:::satvapCpp(microclimdata:::.is(rlst[[2]])-273.15) /  microclimdata:::satvapCpp(microclimf:::.is(rlst[[1]]))) * 100, rte)
+  rh[rh > 100]<-100
+  rlsto[[2]]<-rh
+  rlsto[[3]] <- rlst[[3]]/1000
+  rlsto[[4]] <- rlst[[9]]/3600
+  dni <- rlst[[8]]/3600
+  ll<-microclimdata:::.latslonsfromr(rte)
+  si <- microclimdata:::.rast(microclimdata:::solarindexarray(tme$year+1900, tme$mon+1, tme$mday, tme$hour, ll$lats, ll$lons), rte)
+  rlsto[[5]]  <- rlsto[[4]]  - (si * dni)
+  rlsto[[6]]  <- rlst[[7]]
+  rlsto[[7]]<-sqrt(rlst[[4]]^2+rlst[[5]]^2)*0.7477849 # Wind speed (m/s)
+  rlsto[[8]]<-(atan2(rlst[[4]],rlst[[5]])*180/pi+180)%%360
+  rlsto[[9]]<- rlst[[6]] * 1000
+  names(rlsto)<-c("temp","relhum","pres","swdown","difrad","lwdown","windspeed","winddir","precip")
+  for (i in 1:9)  time(rlsto[[i]])<-as.POSIXct(tme)
+  return(rlsto)
+}
+
 
 
 #' Process era5 data using extract_clima

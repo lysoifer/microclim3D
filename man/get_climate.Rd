@@ -10,9 +10,10 @@ get_climate(
   r,
   tme,
   creds,
+  tilepath,
+  lsmpath,
   out = "grid",
-  rawout = NA,
-  processout,
+  pathout,
   file_prefix,
   clean = F
 )
@@ -20,7 +21,7 @@ get_climate(
 \arguments{
 \item{source}{character; source to get climate data. Accepts
 era5
-era5-hipergator: this gets data from Dave's splined tiles on hipergator}
+era5-hipergator-splined: this gets data from Dave's splined tiles on hipergator}
 
 \item{r}{a SpatRaster object used as a template for downloading data with an EPSG code defined. Should be in a projected crs.}
 
@@ -28,15 +29,17 @@ era5-hipergator: this gets data from Dave's splined tiles on hipergator}
 
 \item{creds}{dataframe with credentials as specified in microclimdata}
 
+\item{tilepath}{if source = era5-hipergator-splined, tilepath = path to splined  era5 tiles on hipergator}
+
+\item{lsmpath}{if source = era5-hipergator-splined, provide path to era5 land-sea-mask}
+
 \item{out}{one of 'grid' or 'point' specifying whether to return a list of arrays of climate data or a data.frame for a single point location.}
 
-\item{rawout}{directory to store raw downloaded data. If NA, a temporary directory will be created and deleted after running}
+\item{pathout}{directory to store data. Separate folders will be created for raw and processed data. raw downloaded data.}
 
 \item{file_prefix}{prefix used for file name}
 
 \item{clean}{logical; if T, deletes original downloads, if F, keeps original downloads}
-
-\item{microout}{directory to store microclimate data grids processed for use in the models}
 }
 \description{
 Download and process climate data
