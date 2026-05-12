@@ -178,13 +178,13 @@ getera5tiles <- function(e, tilepath, year) {
 #' @param r spatRaster template for output
 #' @param year year of climate data to obtain
 #' @param resampleout logical; if TRUE resamples era5 to template. default = F
-era_process_splinedtiles <- function(path, lsmpath, r, year, resampleout = FALSE) {
+era_process_splinedtiles <- function(path, lsmpath, r, yr, resampleout = FALSE) {
   nc = list.files(path, full.names = T)
   # get time
   nc_file <- ncdf4::nc_open(nc[1])
   # hourly time for the year
   tme <- as.POSIXlt((ncdf4::ncvar_get(nc_file, "time")-1)*3600,
-                    origin = paste0(year, "-01-01 00:00"),
+                    origin = paste0(yr, "-01-01 00:00"),
                     tz = "UTC")
   ncdf4::nc_close(nc_file)
   # extract variables
