@@ -40,7 +40,7 @@ get_climate <- function(source, r, tme, creds, tilepath, lsmpath, out = "grid", 
     e = ext(r)
     e = project(e, from = crs(r), to = "epsg:4326")
     tile = getera5tiles(e, tilepath, year = yr)
-    climdat = era_process_splinedtiles(path = tile, lsmpath, r, year, resampleout = FALSE)
+    climdat = era_process_splinedtiles(path = tile, lsmpath, r, yr, resampleout = FALSE)
     climdat = lapply(climdat, wrap)
 
     if(!dir.exists(processout)) {dir.create(processout, recursive = T)}
