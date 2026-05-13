@@ -108,7 +108,7 @@ get_topo = function(r, download, outdir) {
   names(r) <- c("dem", "slp", "asp")
 
   if(!dir.exists(dirname(outdir))) {dir.create(dirname(outdir), recursive = T)}
-  writeRaster(r, outdir)
+  writeRaster(r, outdir, overwrite = T)
   return(r)
 }
 
