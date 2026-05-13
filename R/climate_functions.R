@@ -255,7 +255,7 @@ era_process_splinedtiles <- function(path, lsmpath, r, yr, resampleout = FALSE) 
   rlsto[[5]]  <- rlsto[[4]]  - (si * dni)
   rlsto[[6]]  <- rlst[[7]]
   rlsto[[7]]<-sqrt(rlst[[4]]^2+rlst[[5]]^2)*0.7477849 # Wind speed (m/s)
-  rlsto[[8]]<-(atan2(rlst[[4]],rlst[[5]])*180/pi+180)%%360
+  rlsto[[8]]<-(terra::atan2(rlst[[4]],rlst[[5]])*180/pi+180)%%360
   rlsto[[9]]<- rlst[[6]] * 1000
   names(rlsto)<-c("temp","relhum","pres","swdown","difrad","lwdown","windspeed","winddir","precip")
   for (i in 1:9)  time(rlsto[[i]])<-as.POSIXct(tme)
