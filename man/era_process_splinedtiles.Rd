@@ -4,7 +4,7 @@
 \alias{era_process_splinedtiles}
 \title{process pre-downloaded and splined era5 data}
 \usage{
-era_process_splinedtiles(path, lsmpath, r, year, resampleout = FALSE)
+era_process_splinedtiles(path, lsmpath, r, yr, resampleout = FALSE)
 }
 \arguments{
 \item{path}{path to directory with nc files (located in /orange/scheffers/dklinges/soilTemp/SoilTemp-big-data/climate/era5/global/YYYY/era5_lon_lat/)}
@@ -13,9 +13,9 @@ era_process_splinedtiles(path, lsmpath, r, year, resampleout = FALSE)
 
 \item{r}{spatRaster template for output}
 
-\item{year}{year of climate data to obtain}
-
 \item{resampleout}{logical; if TRUE resamples era5 to template. default = F}
+
+\item{year}{year of climate data to obtain}
 }
 \description{
 process pre-downloaded and splined era5 data

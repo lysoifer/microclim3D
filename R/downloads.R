@@ -83,6 +83,32 @@ get_gedi_tiles = function(e, fpath, unzip = F, download = T) {
 #' @returns saves spatraster to outdir and returns spatraster
 #'
 #' @export
+
+#' @title Get topographic data
+#' @description
+#' Download or provide elevation data. Then calculate slope and aspect.
+#'
+#' @param r
+#' @param download logical; if TRUE, downloads elevation data from amazon web service
+#' and r should be a template raster.
+#' If FALSE, r should be a DEM and slope and aspect will be calculated from r
+#' @param outdir output directory to store the topography data.
+#'
+#' @returns returns topography data
+#' @export
+get_topo = function(r, download, outdir) {
+  if(download) {
+    dem = microclimdata::dem_download(r, msk = F, zeroasna = T)
+  } else {
+    dem = r
+  }
+  asp = terra::terrain(dem, v = "aspect")
+  slp = terra::terrain(dem, v = "slope")
+  r = c(dem, slp, asp)
+  writeRaster(r, outdir)
+  return(r)
+}
+
 get_soil = function(e, outdir, overwrite = FALSE) {
   soil = soilDB::fetchSoilGrids(
     x = e,
