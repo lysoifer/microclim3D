@@ -88,7 +88,7 @@ get_gedi_tiles = function(e, fpath, unzip = F, download = T) {
 #' @description
 #' Download or provide elevation data. Then calculate slope and aspect.
 #'
-#' @param r
+#' @param r template raster or DEM for the study area
 #' @param download logical; if TRUE, downloads elevation data from amazon web service
 #' and r should be a template raster.
 #' If FALSE, r should be a DEM and slope and aspect will be calculated from r
