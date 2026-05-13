@@ -105,6 +105,7 @@ get_topo = function(r, download, outdir) {
   asp = terra::terrain(dem, v = "aspect")
   slp = terra::terrain(dem, v = "slope")
   r = c(dem, slp, asp)
+  names(r) <- c("dem", "slp", "asp")
 
   if(!dir.exists(dirname(outdir))) {dir.create(dirname(outdir), recursive = T)}
   writeRaster(r, outdir)
