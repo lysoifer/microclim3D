@@ -20,8 +20,8 @@ get_climate <- function(source, r, tme, creds, tilepath, lsmpath, out = "grid", 
   # set file paths to save output data
   st = format(tme[1], "%Y-%m-%d")
   en = format(tme[length(tme)], "%Y-%m-%d")
-  processout <- paste0(pathout, "processed/climate/", source, "/")
-  rawout <- paste0(pathout, "raw/climate/", source, "/")
+  processout <- paste0(pathout, "climate_processed/", source, "/")
+  rawout <- paste0(pathout, "climate_raw/", source, "/")
 
   # check if final output exists
   clim_save = paste0(processout, file_prefix, "_", st, "_", en, ".rds")
