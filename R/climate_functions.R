@@ -207,7 +207,7 @@ era_process_splinedtiles <- function(path, lsmpath, r, yr, resampleout = FALSE) 
     if(any(res(rlst[[i]]) != res(rlst[[1]]))) {
       # fact = res(rlst[[i]])[1]/res(rlst[[1]])[1]
       # rlst[[i]] = disagg(rlst[[i]], fact)
-      rlst[[i]] = resample(rlst[[i]], method = "near")
+      rlst[[i]] = resample(rlst[[i]], rlst[[1]][[1]], method = "near")
     }
   }
 
