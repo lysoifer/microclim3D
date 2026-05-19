@@ -11,7 +11,7 @@ get_climate(source = "era5", r, tme, creds, out = "grid", rawout=NA, processout,
 
 Model vertical microclimates using GEDI data to derive information on the vertical distribution of plant area index.
 
-Download GEDI data in a region of interest. As an example, we will use a 1km sqaure area in Mark Twain National Forest in Missouri, USA.
+Download GEDI data in a region of interest. As an example, we will use a 1km square area in Mark Twain National Forest in Missouri, USA.
 
 ```{r}
 pt = data.frame(lon = -91.08, lat = 37.69, region = "mark_twain_nf")

@@ -1,4 +1,4 @@
-#' Download and process climate data
+#' Download (if necessary) and process climate data
 #' use functions from microclimdata package
 #' @param source character; source to get climate data. Accepts
 #' era5
@@ -40,7 +40,14 @@ get_climate <- function(source, r, tme, creds, tilepath, lsmpath, out = "grid", 
     e = ext(r)
     e = project(e, from = crs(r), to = "epsg:4326")
     tile = getera5tiles(e, tilepath, year = yr)
-    climdat = era_process_splinedtiles(path = tile, lsmpath, r, yr, resampleout = FALSE)
+
+    climdat = era_process_splinedtiles(path = tile[1], lsmpath, r, yr, resampleout = FALSE)
+    if(length(tile) > 1) {
+      for(i in 2:length(tile)) {
+        climdat2 = era_process_splinedtiles(path = tile[i], lsmpath, r, yr, resampleout = FALSE)
+        for(ll in 1:length(climdat)) climdat = merge(climdat[[ll]], climdat2[[ll]])
+      }
+    }
     climdat = lapply(climdat, wrap)
 
     if(!dir.exists(processout)) {dir.create(processout, recursive = T)}
@@ -198,8 +205,9 @@ era_process_splinedtiles <- function(path, lsmpath, r, yr, resampleout = FALSE) 
   # make sure everything is the same resolution
   for(i in 2:10) {
     if(any(res(rlst[[i]]) != res(rlst[[1]]))) {
-      fact = res(rlst[[i]])[1]/res(rlst[[1]])[1]
-      rlst[[i]] = disagg(rlst[[i]], fact)
+      # fact = res(rlst[[i]])[1]/res(rlst[[1]])[1]
+      # rlst[[i]] = disagg(rlst[[i]], fact)
+      rlst[[i]] = resample(rlst[[i]], method = "near")
     }
   }
 
