@@ -45,7 +45,7 @@ get_climate <- function(source, r, tme, creds, tilepath, lsmpath, out = "grid", 
     if(length(tile) > 1) {
       for(i in 2:length(tile)) {
         climdat2 = era_process_splinedtiles(path = tile[i], lsmpath, r, yr, resampleout = FALSE)
-        for(ll in 1:length(climdat)) climdat = terra::merge(climdat[[ll]], climdat2[[ll]])
+        for(ll in 1:length(climdat)) climdat[[ll]] = terra::merge(climdat[[ll]], climdat2[[ll]])
       }
     }
     climdat = lapply(climdat, wrap)
